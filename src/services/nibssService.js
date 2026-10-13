@@ -68,4 +68,48 @@ const validateIdentity = async (identityType, identityNumber) => {
   return data;
 };
 
-module.exports = { getToken, validateIdentity };
+
+const createNibssAccount = async (
+  identityType,
+  identityNumber,
+  dateOfBirth,
+) => {
+  const token = await getToken();
+
+  const kycType = identityType.toLowerCase();
+
+  if (!["bvn", "nin"].includes(kycType)) {
+    throw new Error("Identity type must be BVN or NIN");
+  }
+
+  const response = await fetch(`${BASE_URL}/api/account/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      kycType,
+      kycID: identityNumber,
+      dob: dateOfBirth,
+    }),
+  });
+
+  const data = await response.json();
+  console.log("NIBSS account response:", JSON.stringify(data, null, 2));
+
+  if (!response.ok) {
+    const error = new Error(data.message || "NIBSS account creation failed");
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+};
+
+
+module.exports = {
+  getToken,
+  validateIdentity,
+  createNibssAccount,
+};
