@@ -108,8 +108,143 @@ const createNibssAccount = async (
 };
 
 
+const getNibssAccounts = async () => {
+  const token = await getToken();
+
+  const response = await fetch(`${BASE_URL}/api/accounts`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error("Failed to retrieve NIBSS accounts");
+    error.status = response.status;
+    throw error;
+  }
+
+  return data.accounts || [];
+};
+
+
+const nameEnquiry = async (accountNumber) => {
+  const token = await getToken();
+
+  const response = await fetch(
+    `${BASE_URL}/api/account/name-enquiry/${encodeURIComponent(accountNumber)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(data.message || "Name enquiry failed");
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+};
+
+
+const transferFunds = async (from, to, amount) => {
+  const token = await getToken();
+
+  const response = await fetch(`${BASE_URL}/api/transfer`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      from,
+      to,
+      amount: String(amount),
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(data.message || "NIBSS transfer failed");
+
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+};
+
+
+const getNibssAccountBalance = async (accountNumber) => {
+  const token = await getToken();
+
+  const response = await fetch(
+    `${BASE_URL}/api/account/balance/${encodeURIComponent(accountNumber)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(
+      data.message || "Failed to retrieve account balance",
+    );
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+};
+
+
+const getTransactionStatus = async (transactionId) => {
+  const token = await getToken();
+
+  const response = await fetch(
+    `${BASE_URL}/api/transaction/${encodeURIComponent(transactionId)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(
+      data.message || "Failed to retrieve transaction status",
+    );
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+};
+
+
 module.exports = {
   getToken,
   validateIdentity,
   createNibssAccount,
+  getNibssAccounts,
+  nameEnquiry,
+  transferFunds,
+  getNibssAccountBalance,
+  getTransactionStatus,
 };

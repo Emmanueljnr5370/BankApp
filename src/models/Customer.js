@@ -32,6 +32,13 @@ const customerSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    password: {
+      type: String,
+      required: true,
+      minlength: 8,
+      select: false,
+    },
   },
   {
     timestamps: true,
