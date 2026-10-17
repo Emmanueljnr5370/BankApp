@@ -1,14 +1,17 @@
-const { z } = require("zod");
 const Transaction = require("../models/Transaction");
 const Account = require("../models/Account");
 const { getTransactionStatus } = require("../services/nibssService");
 
-// Check the status of a transaction
+// Check the status of a transaction owned by the logged-in customer.
 const checkTransactionStatus = async (req, res) => {
   try {
     const reference = req.params.reference;
+    const customerId = req.customer._id;
 
-    const transaction = await Transaction.findOne({ reference });
+    const transaction = await Transaction.findOne({
+      reference,
+      customerId,
+    });
 
     if (!transaction) {
       return res.status(404).json({
@@ -16,21 +19,16 @@ const checkTransactionStatus = async (req, res) => {
       });
     }
 
-    // Confirm that the transaction belongs to the supplied customer
-    const customerId = req.query.customerId;
-
-    if (!customerId || transaction.customerId.toString() !== customerId) {
-      return res.status(403).json({
-        message: "You are not allowed to view this transaction",
-      });
-    }
-
     const nibssResult = await getTransactionStatus(reference);
     const statusData = nibssResult.data || nibssResult;
 
     if (statusData.status) {
-      transaction.status = statusData.status.toUpperCase();
-      await transaction.save();
+      const updatedStatus = String(statusData.status).toUpperCase();
+
+      if (["SUCCESS", "PENDING", "FAILED"].includes(updatedStatus)) {
+        transaction.status = updatedStatus;
+        await transaction.save();
+      }
     }
 
     return res.status(200).json({
@@ -53,22 +51,10 @@ const checkTransactionStatus = async (req, res) => {
   }
 };
 
-// View a customer's transaction history
+// View only the logged-in customer's transaction history.
 const getTransactionHistory = async (req, res) => {
   try {
-    const customerId = req.query.customerId;
-
-    if (
-      !customerId ||
-      !z
-        .string()
-        .regex(/^[a-f\d]{24}$/i)
-        .safeParse(customerId).success
-    ) {
-      return res.status(400).json({
-        message: "A valid customerId is required",
-      });
-    }
+    const customerId = req.customer._id;
 
     const accounts = await Account.find({ customerId }).select("accountNumber");
 
@@ -81,6 +67,7 @@ const getTransactionHistory = async (req, res) => {
     const accountNumbers = accounts.map((account) => account.accountNumber);
 
     const transactions = await Transaction.find({
+      customerId,
       $or: [
         { senderAccount: { $in: accountNumbers } },
         { receiverAccount: { $in: accountNumbers } },

@@ -6,6 +6,7 @@ const customerRoutes = require("./routes/customerRoutes");
 const accountRoutes = require("./routes/accountRoutes");
 const transferRoutes = require("./routes/transferRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
+const kycRoutes = require("./routes/kycRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,6 +19,7 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/transfers", transferRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/kyc", kycRoutes);
 
 // Test endpoint
 app.get("/", (req, res) => {

@@ -238,6 +238,36 @@ const getTransactionStatus = async (transactionId) => {
 };
 
 
+const createTestBvn = async ({ bvn, firstName, lastName, dob, phone }) => {
+  const token = await getToken();
+
+  const response = await fetch(`${BASE_URL}/api/insertBvn`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      bvn,
+      firstName,
+      lastName,
+      dob,
+      phone,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data.success === false) {
+    const error = new Error(data.message || "BVN creation failed");
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
+};
+
+
 module.exports = {
   getToken,
   validateIdentity,
@@ -247,4 +277,5 @@ module.exports = {
   transferFunds,
   getNibssAccountBalance,
   getTransactionStatus,
+  createTestBvn,
 };

@@ -1,4 +1,6 @@
 const express = require("express");
+const protect = require("../middleware/authMiddleware");
+
 const {
   createAccount,
   checkAccountName,
@@ -7,7 +9,7 @@ const {
 
 const router = express.Router();
 
-router.post("/create", createAccount);
+router.post("/create", protect, createAccount);
 router.get("/name-enquiry/:accountNumber", checkAccountName);
 router.get("/balance/:accountNumber", checkAccountBalance);
 

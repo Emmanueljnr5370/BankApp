@@ -8,12 +8,13 @@ const {
   getNibssAccountBalance,
 } = require("../services/nibssService");
 
+
 const accountCreationSchema = z.object({
-  customerId: z.string().min(1, "Customer ID is required"),
   identityType: z.enum(["BVN", "NIN"]),
   identityNumber: z.string().trim().min(1, "Identity number is required"),
   dateOfBirth: z.string().trim().min(1, "Date of birth is required"),
 });
+
 
 const createAccount = async (req, res) => {
   try {
@@ -29,8 +30,8 @@ const createAccount = async (req, res) => {
       });
     }
 
-    const { customerId, identityType, identityNumber, dateOfBirth } =
-      result.data;
+    const { identityType, identityNumber, dateOfBirth } = result.data;
+    const customerId = req.customer._id.toString();
 
     // Find the customer in MongoDB.
     const customer = await Customer.findById(customerId);
@@ -97,7 +98,11 @@ const createAccount = async (req, res) => {
         JSON.stringify(nibssResult, null, 2),
       );
 
-      accountData = nibssResult.data || nibssResult;
+      accountData =
+        nibssResult.data?.account ||
+        nibssResult.account ||
+        nibssResult.data ||
+        nibssResult;
     }
 
     if (!accountData.accountNumber) {
@@ -106,18 +111,34 @@ const createAccount = async (req, res) => {
       });
     }
 
-    // Save the NIBSS account in our local MongoDB database.
+    // Extract the account number from the NIBSS response.
+    const accountNumber = String(accountData.accountNumber || "");
+
+    if (!/^\d{10}$/.test(accountNumber)) {
+      console.error(
+        "Unexpected NIBSS account response:",
+        JSON.stringify(accountData, null, 2),
+      );
+
+      return res.status(502).json({
+        message: "NIBSS did not return a valid account number",
+      });
+    }
+
+    // Save the NIBSS account in MongoDB.
+    console.log("Creating account for customer:", customer._id.toString());
+    console.log("Customer email:", customer.email);
+    console.log("New account number:", accountNumber);
+    
     const account = await Account.create({
       customerId: customer._id,
-      accountNumber: String(accountData.accountNumber),
+      accountNumber,
       bankName: accountData.bankName || "NIBSS",
       balance: 15000,
     });
 
     return res.status(201).json({
-      message: matchingAccount
-        ? "Existing NIBSS account linked successfully"
-        : "Account created successfully",
+      message: "Account created and saved successfully",
       account: {
         accountNumber: account.accountNumber,
         bankName: account.bankName,

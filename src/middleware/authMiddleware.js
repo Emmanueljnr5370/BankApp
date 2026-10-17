@@ -5,20 +5,16 @@ const protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
-    // Check whether the token was provided.
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         message: "Access denied. Please log in.",
       });
     }
 
-    // Extract the token from the Authorization header.
     const token = authHeader.split(" ")[1];
 
-    // Verify that the token is valid.
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Find the customer associated with the token.
     const customer = await Customer.findById(decoded.customerId);
 
     if (!customer) {
@@ -27,11 +23,12 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // Make the authenticated customer available to the controller.
     req.customer = customer;
 
     next();
   } catch (error) {
+    console.error("Authentication error:", error.message);
+
     return res.status(401).json({
       message: "Invalid or expired token. Please log in again.",
     });

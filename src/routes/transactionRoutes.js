@@ -1,4 +1,5 @@
 const express = require("express");
+const protect = require("../middleware/authMiddleware");
 
 const {
   checkTransactionStatus,
@@ -7,7 +8,7 @@ const {
 
 const router = express.Router();
 
-router.get("/history", getTransactionHistory);
-router.get("/:reference/status", checkTransactionStatus);
+router.get("/history", protect, getTransactionHistory);
+router.get("/:reference/status", protect, checkTransactionStatus);
 
 module.exports = router;
