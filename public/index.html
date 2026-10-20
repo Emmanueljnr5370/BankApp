@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Manage your account and transfers with Cedar Bank."
+    />
+    <meta name="theme-color" content="#f5f7f4" />
+    <title>Cedar Bank — Digital banking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="auth-page" id="auth-page">
+      <main class="auth-card">
+        <a class="brand" href="/app/" aria-label="Cedar Bank home">
+          <span class="brand-mark" aria-hidden="true">C</span>
+          <span>cedar<span class="brand-light">bank</span></span>
+        </a>
+        <div class="auth-heading">
+          <p class="eyebrow">A better way to bank</p>
+          <h1 id="auth-title">Welcome back</h1>
+          <p class="muted" id="auth-description">
+            Sign in to your account to pick up where you left off.
+          </p>
+        </div>
+        <div class="auth-tabs" role="tablist" aria-label="Account access">
+          <button class="auth-tab active" id="login-tab" type="button" role="tab">
+            Sign in
+          </button>
+          <button class="auth-tab" id="register-tab" type="button" role="tab">
+            Create account
+          </button>
+        </div>
+
+        <form id="login-form" class="form-stack">
+          <label>
+            Email address
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+          <label>
+            Password
+            <input
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          <button class="button button-primary button-wide" type="submit">
+            Sign in <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <form id="register-form" class="form-stack hidden">
+          <label>
+            Full name
+            <input name="fullName" autocomplete="name" required minlength="2" />
+          </label>
+          <div class="field-row">
+            <label>
+              Email address
+              <input name="email" type="email" autocomplete="email" required />
+            </label>
+            <label>
+              Phone number
+              <input
+                name="phoneNumber"
+                type="tel"
+                autocomplete="tel"
+                required
+                minlength="7"
+              />
+            </label>
+          </div>
+          <div class="field-row">
+            <label>
+              Identity type
+              <select name="identityType" required>
+                <option value="BVN">BVN</option>
+                <option value="NIN">NIN</option>
+              </select>
+            </label>
+            <label>
+              BVN or NIN
+              <input name="identityNumber" inputmode="numeric" required />
+            </label>
+          </div>
+          <label>
+            Date of birth
+            <input name="dateOfBirth" type="date" required />
+          </label>
+          <label>
+            Password <span class="label-hint">At least 8 characters</span>
+            <input
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              required
+              minlength="8"
+            />
+          </label>
+          <p class="form-note">
+            Your identity details are verified securely during registration.
+          </p>
+          <button class="button button-primary button-wide" type="submit">
+            Verify &amp; create account <span aria-hidden="true">→</span>
+          </button>
+        </form>
+        <p class="auth-footnote">
+          Protected with secure, encrypted connections.
+        </p>
+      </main>
+      <aside class="auth-aside">
+        <div class="aside-orb orb-one"></div>
+        <div class="aside-orb orb-two"></div>
+        <div class="aside-content">
+          <span class="aside-kicker">Banking, with room to grow</span>
+          <h2>Your money.<br />Moving forward.</h2>
+          <p>
+            A thoughtful, simple way to manage your account and make transfers
+            with confidence.
+          </p>
+          <div class="aside-quote">
+            <span class="quote-mark">“</span>
+            <p>Clarity for every day. Confidence for what comes next.</p>
+            <span class="quote-author">CEDAR BANK</span>
+          </div>
+        </div>
+        <span class="aside-footer">A calmer kind of banking.</span>
+      </aside>
+    </div>
+
+    <div class="app-shell hidden" id="app-shell">
+      <aside class="sidebar">
+        <a class="brand sidebar-brand" href="/app/" aria-label="Cedar Bank home">
+          <span class="brand-mark" aria-hidden="true">C</span>
+          <span>cedar<span class="brand-light">bank</span></span>
+        </a>
+        <p class="nav-label">YOUR SPACE</p>
+        <nav class="main-nav" aria-label="Main navigation">
+          <a class="nav-item active" href="#overview">
+            <span class="nav-icon" aria-hidden="true">◫</span> Overview
+          </a>
+          <a class="nav-item" href="#transactions">
+            <span class="nav-icon" aria-hidden="true">↔</span> Transactions
+          </a>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="help-card">
+            <span class="help-icon" aria-hidden="true">✳</span>
+            <strong>Here to help</strong>
+            <span>Questions about your account?</span>
+          </div>
+          <button class="nav-item logout-button" id="logout-button" type="button">
+            <span class="nav-icon" aria-hidden="true">↪</span> Sign out
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-content" id="overview">
+        <header class="topbar">
+          <div class="mobile-brand">
+            <span class="brand-mark" aria-hidden="true">C</span>
+            <span>cedar<span class="brand-light">bank</span></span>
+          </div>
+          <div class="breadcrumb"><span>YOUR SPACE</span><b>/</b> Overview</div>
+          <div class="user-menu">
+            <span class="online-dot" aria-hidden="true"></span>
+            <span class="user-name" id="header-name">Welcome</span>
+            <span class="avatar" id="user-avatar">C</span>
+          </div>
+        </header>
+
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow">YOUR FINANCES, IN FOCUS</p>
+            <h1 id="welcome-name">Good day</h1>
+            <p class="muted">Here’s what’s happening with your account.</p>
+          </div>
+          <p class="today-date" id="today-date"></p>
+        </section>
+
+        <section id="account-setup" class="setup-card hidden">
+          <div class="setup-copy">
+            <span class="setup-icon" aria-hidden="true">✳</span>
+            <p class="eyebrow">ONE LAST STEP</p>
+            <h2>Open your Cedar account</h2>
+            <p class="muted">
+              Confirm your verified identity details to create your account.
+            </p>
+          </div>
+          <form id="account-form" class="setup-form">
+            <div class="field-row">
+              <label>
+                Identity type
+                <select name="identityType" required>
+                  <option value="BVN">BVN</option>
+                  <option value="NIN">NIN</option>
+                </select>
+              </label>
+              <label>
+                BVN or NIN
+                <input name="identityNumber" inputmode="numeric" required />
+              </label>
+            </div>
+            <label>
+              Date of birth
+              <input name="dateOfBirth" type="date" required />
+            </label>
+            <button class="button button-primary" type="submit">
+              Create my account <span aria-hidden="true">→</span>
+            </button>
+          </form>
+        </section>
+
+        <section id="account-content" class="hidden">
+          <div class="overview-grid">
+            <article class="balance-card">
+              <div class="balance-topline">
+                <span class="balance-label">TOTAL BALANCE</span>
+                <span class="balance-status"><span></span> ACCOUNT ACTIVE</span>
+              </div>
+              <p class="balance-amount" id="account-balance">₦0.00</p>
+              <p class="account-meta">
+                <span id="bank-name">Cedar Bank</span>
+                <span class="meta-divider">·</span>
+                <span id="account-number">•••• •••• ••••</span>
+              </p>
+              <button class="balance-refresh" id="refresh-balance" type="button">
+                <span aria-hidden="true">↻</span> Sync balance
+              </button>
+              <div class="balance-decoration"></div>
+            </article>
+
+            <article class="quick-card">
+              <div class="section-title">
+                <div>
+                  <p class="eyebrow">GET THINGS DONE</p>
+                  <h2>Quick actions</h2>
+                </div>
+                <span class="quick-spark" aria-hidden="true">✳</span>
+              </div>
+              <button class="quick-action" id="open-transfer" type="button">
+                <span class="action-icon transfer-icon" aria-hidden="true">↗</span>
+                <span><strong>Send money</strong><small>Make a transfer</small></span>
+                <span class="action-arrow" aria-hidden="true">→</span>
+              </button>
+              <a class="quick-action" href="#transactions">
+                <span class="action-icon history-icon" aria-hidden="true">◷</span>
+                <span><strong>View activity</strong><small>See your transactions</small></span>
+                <span class="action-arrow" aria-hidden="true">→</span>
+              </a>
+            </article>
+          </div>
+
+          <section class="transactions-panel" id="transactions">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">YOUR ACCOUNT</p>
+                <h2>Recent activity</h2>
+              </div>
+              <button class="text-button" id="reload-transactions" type="button">
+                Refresh <span aria-hidden="true">↻</span>
+              </button>
+            </div>
+            <div class="transaction-table-wrap">
+              <table class="transaction-table">
+                <thead>
+                  <tr>
+                    <th>TRANSACTION</th>
+                    <th>DATE</th>
+                    <th>REFERENCE</th>
+                    <th>STATUS</th>
+                    <th class="amount-heading">AMOUNT</th>
+                  </tr>
+                </thead>
+                <tbody id="transaction-list"></tbody>
+              </table>
+              <div class="empty-state hidden" id="empty-transactions">
+                <span class="empty-icon" aria-hidden="true">↔</span>
+                <strong>No transactions yet</strong>
+                <p>Your transfers will appear here when you make them.</p>
+                <button class="button button-secondary" id="empty-send" type="button">
+                  Make a transfer
+                </button>
+              </div>
+            </div>
+          </section>
+          <p class="page-footnote">Your account, at a glance. Built around you.</p>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="transfer-dialog" id="transfer-dialog">
+      <form id="transfer-form" class="dialog-card">
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">MOVE MONEY</p>
+            <h2>Make a transfer</h2>
+          </div>
+          <button
+            class="dialog-close"
+            id="close-transfer"
+            type="button"
+            aria-label="Close transfer"
+          >×</button>
+        </div>
+        <p class="muted dialog-intro">
+          Transfers are verified with your bank before they’re submitted.
+        </p>
+        <label>
+          From
+          <input name="from" id="transfer-from" readonly required />
+        </label>
+        <label>
+          Recipient account number
+          <input
+            name="to"
+            inputmode="numeric"
+            pattern="[0-9]{10}"
+            maxlength="10"
+            placeholder="10-digit account number"
+            required
+          />
+        </label>
+        <p class="recipient-preview hidden" id="recipient-preview"></p>
+        <label>
+          Amount
+          <div class="amount-input">
+            <span>₦</span>
+            <input
+              name="amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+          </div>
+        </label>
+        <p class="form-note">Make sure the recipient details are correct before sending.</p>
+        <button class="button button-primary button-wide" type="submit">
+          Review &amp; send <span aria-hidden="true">→</span>
+        </button>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

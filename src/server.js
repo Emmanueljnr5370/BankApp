@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const path = require("path");
 const connectDB = require("./config/db");
 const customerRoutes = require("./routes/customerRoutes");
 const accountRoutes = require("./routes/accountRoutes");
@@ -20,6 +21,7 @@ app.use("/api/accounts", accountRoutes);
 app.use("/api/transfers", transferRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/kyc", kycRoutes);
+app.use("/app", express.static(path.join(__dirname, "..", "public")));
 
 // Test endpoint
 app.get("/", (req, res) => {

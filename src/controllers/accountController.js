@@ -15,6 +15,32 @@ const accountCreationSchema = z.object({
   dateOfBirth: z.string().trim().min(1, "Date of birth is required"),
 });
 
+const getCustomerAccount = async (req, res) => {
+  try {
+    const account = await Account.findOne({ customerId: req.customer._id });
+
+    if (!account) {
+      return res.status(404).json({
+        message: "No account found for this customer",
+      });
+    }
+
+    return res.status(200).json({
+      account: {
+        accountNumber: account.accountNumber,
+        bankName: account.bankName,
+        balance: account.balance,
+        currency: "NGN",
+      },
+    });
+  } catch (error) {
+    console.error("Customer account lookup error:", error.message);
+
+    return res.status(500).json({
+      message: "Unable to retrieve account details",
+    });
+  }
+};
 
 const createAccount = async (req, res) => {
   try {
@@ -267,6 +293,7 @@ const checkAccountBalance = async (req, res) => {
 };
 
 module.exports = {
+  getCustomerAccount,
   createAccount,
   checkAccountName,
   checkAccountBalance,
