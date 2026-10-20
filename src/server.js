@@ -21,7 +21,7 @@ app.use("/api/accounts", accountRoutes);
 app.use("/api/transfers", transferRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/kyc", kycRoutes);
-app.use("/app", express.static(path.join(__dirname, "..", "public")));
+app.use("/app", express.static(path.join(__dirname, "public")));
 
 // Test endpoint
 app.get("/", (req, res) => {
