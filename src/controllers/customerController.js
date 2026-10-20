@@ -3,6 +3,7 @@ const { z } = require("zod");
 const { validateIdentity } = require("../services/nibssService");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { normalizeDateOfBirth } = require("../utils/dateUtils");
 
 const customerSchema = z.object({
   fullName: z.string().trim().min(2),
@@ -30,9 +31,6 @@ const registerCustomer = async (req, res) => {
       });
     }
 
-    const { password } = result.data;
-    const hashedPassword = await bcrypt.hash(password, 12);
-
     const {
       fullName,
       email,
@@ -40,7 +38,16 @@ const registerCustomer = async (req, res) => {
       identityType,
       identityNumber,
       dateOfBirth,
+      password,
     } = result.data;
+
+    const submittedDateOfBirth = normalizeDateOfBirth(dateOfBirth);
+
+    if (!submittedDateOfBirth) {
+      return res.status(400).json({
+        message: "Date of birth must be a valid date in YYYY-MM-DD format",
+      });
+    }
 
     const existingCustomer = await Customer.findOne({ email });
 
@@ -73,12 +80,29 @@ const registerCustomer = async (req, res) => {
       });
     }
 
-    // Compare the submitted date of birth with the verified date of birth.
-    if (verifiedData.dob !== dateOfBirth) {
+    const verifiedDateValue = [
+      verifiedData.dob,
+      verifiedData.dateOfBirth,
+      verifiedData.date_of_birth,
+      verifiedData.DOB,
+    ].find((value) => value !== undefined && value !== null && value !== "");
+    const verifiedDateOfBirth = normalizeDateOfBirth(verifiedDateValue);
+
+    if (!verifiedDateOfBirth) {
+      console.error("NIBSS identity response did not contain a valid date of birth");
+
+      return res.status(502).json({
+        message: "Identity verification returned an invalid date of birth",
+      });
+    }
+
+    if (verifiedDateOfBirth !== submittedDateOfBirth) {
       return res.status(400).json({
         message: "Date of birth does not match the verified identity",
       });
     }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Only save the customer after NIBSS confirms verification.
     const customer = await Customer.create({
