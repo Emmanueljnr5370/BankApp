@@ -1,3 +1,5 @@
+const API_BASE_URL = "https://banking-api-app.onrender.com/api";
+
 const TOKEN_KEY = "cedarBankToken";
 const CUSTOMER_KEY = "cedarBankCustomer";
 
@@ -39,7 +41,11 @@ function showToast(message, kind = "success") {
   toast.textContent = message;
   toast.classList.toggle("error", kind === "error");
   toast.classList.add("visible");
-  toastTimeout = window.setTimeout(() => toast.classList.remove("visible"), 4200);
+
+  toastTimeout = window.setTimeout(
+    () => toast.classList.remove("visible"),
+    4200,
+  );
 }
 
 async function apiRequest(path, options = {}) {
@@ -49,32 +55,53 @@ async function apiRequest(path, options = {}) {
   if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
   let response;
+
   try {
-    response = await fetch(`/api${path}`, { ...options, headers });
-  } catch {
-    throw new ApiError("Could not connect to Cedar Bank. Check your connection and try again.");
+    const endpoint = `${API_BASE_URL}${path}`;
+
+    response = await fetch(endpoint, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    console.error("API connection error:", error);
+
+    throw new ApiError(
+      "Could not connect to Cedar Bank. Check your connection and try again.",
+    );
   }
 
   let data = {};
+
   try {
     data = await response.json();
   } catch {
     if (response.ok) {
-      throw new ApiError("The server returned an unreadable response.", response.status);
+      throw new ApiError(
+        "The server returned an unreadable response.",
+        response.status,
+      );
     }
   }
 
   if (!response.ok) {
     const validationMessage = Array.isArray(data.errors)
-      ? data.errors.map((issue) => issue.message).filter(Boolean).join(". ")
+      ? data.errors
+          .map((issue) => issue.message)
+          .filter(Boolean)
+          .join(". ")
       : "";
+
     throw new ApiError(
-      validationMessage || data.message || "The request could not be completed.",
+      validationMessage ||
+        data.message ||
+        "The request could not be completed.",
       response.status,
     );
   }
@@ -84,7 +111,9 @@ async function apiRequest(path, options = {}) {
 
 function setBusy(form, busy, label) {
   const button = form.querySelector('button[type="submit"]');
+
   if (!button) return;
+
   if (busy) {
     button.dataset.originalText = button.textContent;
     button.textContent = label;
@@ -92,18 +121,25 @@ function setBusy(form, busy, label) {
     button.textContent = button.dataset.originalText;
     delete button.dataset.originalText;
   }
+
   button.disabled = busy;
 }
 
 function setAuthMode(mode) {
   const isRegister = mode === "register";
+
   loginForm.classList.toggle("hidden", isRegister);
   registerForm.classList.toggle("hidden", !isRegister);
+
   document.querySelector("#login-tab").classList.toggle("active", !isRegister);
-  document.querySelector("#register-tab").classList.toggle("active", isRegister);
+  document
+    .querySelector("#register-tab")
+    .classList.toggle("active", isRegister);
+
   document.querySelector("#auth-title").textContent = isRegister
     ? "Start with Cedar"
     : "Welcome back";
+
   document.querySelector("#auth-description").textContent = isRegister
     ? "Create your account with a few details. Identity verification is required."
     : "Sign in to your account to pick up where you left off.";
@@ -119,8 +155,11 @@ function formatNaira(amount) {
 
 function formatDate(value) {
   if (!value) return "—";
+
   const date = new Date(value);
+
   if (Number.isNaN(date.getTime())) return "—";
+
   return new Intl.DateTimeFormat("en-NG", {
     day: "numeric",
     month: "short",
@@ -131,29 +170,49 @@ function formatDate(value) {
 function setCustomerDetails() {
   const name = customer?.fullName || "Customer";
   const firstName = name.trim().split(/\s+/)[0];
+
   document.querySelector("#header-name").textContent = name;
-  document.querySelector("#welcome-name").textContent = `Good day, ${firstName}`;
-  document.querySelector("#user-avatar").textContent = firstName.charAt(0).toUpperCase();
+  document.querySelector("#welcome-name").textContent =
+    `Good day, ${firstName}`;
+  document.querySelector("#user-avatar").textContent = firstName
+    .charAt(0)
+    .toUpperCase();
+
   document.querySelector("#today-date").textContent = new Intl.DateTimeFormat(
     "en-NG",
-    { weekday: "short", day: "numeric", month: "short", year: "numeric" },
+    {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
   ).format(new Date());
 }
 
 function setAccountDetails() {
-  document.querySelector("#account-balance").textContent = formatNaira(account.balance);
-  document.querySelector("#bank-name").textContent = account.bankName || "Cedar Bank";
+  document.querySelector("#account-balance").textContent = formatNaira(
+    account.balance,
+  );
+
+  document.querySelector("#bank-name").textContent =
+    account.bankName || "Cedar Bank";
+
   document.querySelector("#account-number").textContent = account.accountNumber;
+
   document.querySelector("#transfer-from").value = account.accountNumber;
 }
 
 async function loadAccount() {
   try {
     const data = await apiRequest("/accounts/me");
+
     account = data.account;
+
     accountSetup.classList.add("hidden");
     accountContent.classList.remove("hidden");
+
     setAccountDetails();
+
     await loadTransactions();
   } catch (error) {
     if (error.status === 404) {
@@ -162,6 +221,7 @@ async function loadAccount() {
       accountSetup.classList.remove("hidden");
       return;
     }
+
     showToast(error.message, "error");
   }
 }
@@ -171,82 +231,125 @@ function showDashboard() {
   appShell.classList.remove("hidden");
   accountSetup.classList.add("hidden");
   accountContent.classList.add("hidden");
+
   setCustomerDetails();
+
   void loadAccount();
 }
 
 function signOut() {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(CUSTOMER_KEY);
+
   customer = null;
   account = null;
+
   accountSetup.classList.add("hidden");
   accountContent.classList.add("hidden");
+
   document.querySelector("#transaction-list").replaceChildren();
+
   authPage.classList.remove("hidden");
   appShell.classList.add("hidden");
+
   loginForm.reset();
   registerForm.reset();
 }
 
 function addTextCell(row, text, className) {
   const cell = document.createElement("td");
+
   if (className) cell.className = className;
+
   cell.textContent = text;
   row.append(cell);
+
   return cell;
 }
 
 function renderTransactions(transactions) {
   const list = document.querySelector("#transaction-list");
   const empty = document.querySelector("#empty-transactions");
+
   list.replaceChildren();
 
   if (!transactions.length) {
     empty.classList.remove("hidden");
     return;
   }
+
   empty.classList.add("hidden");
 
   for (const transaction of transactions) {
     const outgoing = transaction.senderAccount === account.accountNumber;
+
     const row = document.createElement("tr");
     const kindCell = document.createElement("td");
     const kind = document.createElement("span");
     const icon = document.createElement("span");
+
     icon.className = "transaction-kind-icon";
     icon.setAttribute("aria-hidden", "true");
     icon.textContent = outgoing ? "↗" : "↙";
+
     kind.className = "transaction-kind";
-    kind.append(icon, document.createTextNode(outgoing ? "Transfer sent" : "Money received"));
+
+    kind.append(
+      icon,
+      document.createTextNode(outgoing ? "Transfer sent" : "Money received"),
+    );
+
     kindCell.append(kind);
     row.append(kindCell);
+
     addTextCell(row, formatDate(transaction.createdAt));
 
-    const referenceCell = addTextCell(row, transaction.reference || "—", "transaction-reference");
+    const referenceCell = addTextCell(
+      row,
+      transaction.reference || "—",
+      "transaction-reference",
+    );
+
     if (transaction.reference) {
       referenceCell.title = transaction.reference;
     }
 
     const statusCell = document.createElement("td");
     const status = document.createElement("span");
-    const normalizedStatus = String(transaction.status || "PENDING").toLowerCase();
+
+    const normalizedStatus = String(
+      transaction.status || "PENDING",
+    ).toLowerCase();
+
     status.className = `status-pill status-${normalizedStatus}`;
     status.textContent = normalizedStatus;
+
     statusCell.append(status);
+
     if (normalizedStatus === "pending" && transaction.reference) {
       const checkButton = document.createElement("button");
+
       checkButton.className = "status-check";
       checkButton.type = "button";
       checkButton.textContent = "Check";
-      checkButton.addEventListener("click", () => refreshTransactionStatus(transaction.reference));
+
+      checkButton.addEventListener("click", () =>
+        refreshTransactionStatus(transaction.reference),
+      );
+
       statusCell.append(checkButton);
     }
+
     row.append(statusCell);
 
     const amount = document.createElement("td");
+
     amount.className = `amount-cell ${outgoing ? "amount-out" : "amount-in"}`;
-    amount.textContent = `${outgoing ? "−" : "+"}${formatNaira(transaction.amount)}`;
+
+    amount.textContent = `${
+      outgoing ? "−" : "+"
+    }${formatNaira(transaction.amount)}`;
+
     row.append(amount);
     list.append(row);
   }
@@ -255,7 +358,10 @@ function renderTransactions(transactions) {
 async function loadTransactions() {
   try {
     const data = await apiRequest("/transactions/history");
-    renderTransactions(Array.isArray(data.transactions) ? data.transactions : []);
+
+    renderTransactions(
+      Array.isArray(data.transactions) ? data.transactions : [],
+    );
   } catch (error) {
     showToast(error.message, "error");
   }
@@ -264,7 +370,9 @@ async function loadTransactions() {
 async function refreshTransactionStatus(reference) {
   try {
     await apiRequest(`/transactions/${encodeURIComponent(reference)}/status`);
+
     await loadTransactions();
+
     showToast("Transaction status updated.");
   } catch (error) {
     showToast(error.message, "error");
@@ -273,14 +381,19 @@ async function refreshTransactionStatus(reference) {
 
 async function refreshBalance() {
   if (!account || !customer?.id) return;
+
   const button = document.querySelector("#refresh-balance");
   button.disabled = true;
+
   try {
     const data = await apiRequest(
       `/accounts/balance/${encodeURIComponent(account.accountNumber)}?customerId=${encodeURIComponent(customer.id)}`,
     );
+
     account.balance = data.account.balance;
+
     setAccountDetails();
+
     showToast("Your account balance is up to date.");
   } catch (error) {
     showToast(error.message, "error");
@@ -291,26 +404,35 @@ async function refreshBalance() {
 
 function openTransfer() {
   if (!account) return;
+
   transferForm.reset();
+
   document.querySelector("#transfer-from").value = account.accountNumber;
+
   document.querySelector("#recipient-preview").classList.add("hidden");
+
   transferDialog.showModal();
 }
 
 async function checkRecipient(accountNumber) {
   const preview = document.querySelector("#recipient-preview");
+
   if (!/^\d{10}$/.test(accountNumber)) {
     preview.classList.add("hidden");
     return;
   }
+
   try {
     const result = await apiRequest(
       `/accounts/name-enquiry/${encodeURIComponent(accountNumber)}`,
     );
+
     const details = result.data || result;
+
     preview.textContent = details.accountName
       ? `Recipient: ${details.accountName}`
       : "Account verified. Confirm the recipient name before continuing.";
+
     preview.classList.remove("hidden");
   } catch (error) {
     preview.textContent = error.message;
@@ -318,19 +440,38 @@ async function checkRecipient(accountNumber) {
   }
 }
 
-document.querySelector("#login-tab").addEventListener("click", () => setAuthMode("login"));
-document.querySelector("#register-tab").addEventListener("click", () => setAuthMode("register"));
+document
+  .querySelector("#login-tab")
+  .addEventListener("click", () => setAuthMode("login"));
+
+document
+  .querySelector("#register-tab")
+  .addEventListener("click", () => setAuthMode("register"));
+
 document.querySelector("#logout-button").addEventListener("click", signOut);
-document.querySelector("#open-transfer").addEventListener("click", openTransfer);
+document
+  .querySelector("#open-transfer")
+  .addEventListener("click", openTransfer);
 document.querySelector("#empty-send").addEventListener("click", openTransfer);
-document.querySelector("#close-transfer").addEventListener("click", () => transferDialog.close());
-document.querySelector("#refresh-balance").addEventListener("click", refreshBalance);
-document.querySelector("#reload-transactions").addEventListener("click", loadTransactions);
+
+document
+  .querySelector("#close-transfer")
+  .addEventListener("click", () => transferDialog.close());
+
+document
+  .querySelector("#refresh-balance")
+  .addEventListener("click", refreshBalance);
+document
+  .querySelector("#reload-transactions")
+  .addEventListener("click", loadTransactions);
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+
   setBusy(loginForm, true, "Signing in…");
+
   const formData = new FormData(loginForm);
+
   try {
     const data = await apiRequest("/customers/login", {
       method: "POST",
@@ -339,9 +480,13 @@ loginForm.addEventListener("submit", async (event) => {
         password: formData.get("password"),
       }),
     });
+
     sessionStorage.setItem(TOKEN_KEY, data.token);
+
     customer = data.customer;
+
     sessionStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
+
     showDashboard();
   } catch (error) {
     showToast(error.message, "error");
@@ -352,17 +497,24 @@ loginForm.addEventListener("submit", async (event) => {
 
 registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+
   setBusy(registerForm, true, "Verifying identity…");
+
   const formData = new FormData(registerForm);
   const details = Object.fromEntries(formData.entries());
+
   try {
     await apiRequest("/customers/register", {
       method: "POST",
       body: JSON.stringify(details),
     });
+
     registerForm.reset();
+
     setAuthMode("login");
+
     loginForm.elements.email.value = details.email;
+
     showToast("Identity verified and account created. Please sign in.");
   } catch (error) {
     showToast(error.message, "error");
@@ -373,15 +525,21 @@ registerForm.addEventListener("submit", async (event) => {
 
 accountForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+
   setBusy(accountForm, true, "Creating account…");
+
   const formData = new FormData(accountForm);
+
   try {
     await apiRequest("/accounts/create", {
       method: "POST",
       body: JSON.stringify(Object.fromEntries(formData.entries())),
     });
+
     accountForm.reset();
+
     showToast("Your account is ready.");
+
     await loadAccount();
   } catch (error) {
     showToast(error.message, "error");
@@ -392,19 +550,31 @@ accountForm.addEventListener("submit", async (event) => {
 
 transferForm.elements.to.addEventListener("input", (event) => {
   window.clearTimeout(nameEnquiryTimeout);
+
   const number = event.target.value.trim();
-  nameEnquiryTimeout = window.setTimeout(() => void checkRecipient(number), 350);
+
+  nameEnquiryTimeout = window.setTimeout(
+    () => void checkRecipient(number),
+    350,
+  );
 });
 
 transferForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+
   const formData = new FormData(transferForm);
+
   const recipientNumber = String(formData.get("to")).trim();
   const amount = Number(formData.get("amount"));
+
   if (!/^\d{10}$/.test(recipientNumber)) {
-    showToast("Recipient account number must contain exactly 10 digits.", "error");
+    showToast(
+      "Recipient account number must contain exactly 10 digits.",
+      "error",
+    );
     return;
   }
+
   if (!Number.isFinite(amount) || amount <= 0) {
     showToast("Enter a valid transfer amount.", "error");
     return;
@@ -413,9 +583,11 @@ transferForm.addEventListener("submit", async (event) => {
   const confirmed = window.confirm(
     `Send ${formatNaira(amount)} to account ${recipientNumber}?`,
   );
+
   if (!confirmed) return;
 
   setBusy(transferForm, true, "Submitting transfer…");
+
   try {
     const data = await apiRequest("/transfers", {
       method: "POST",
@@ -425,9 +597,12 @@ transferForm.addEventListener("submit", async (event) => {
         amount,
       }),
     });
+
     transferDialog.close();
     transferForm.reset();
+
     showToast(data.message || "Transfer submitted.");
+
     await Promise.all([loadTransactions(), refreshBalance()]);
   } catch (error) {
     showToast(error.message, "error");

@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const express = require("express");
 const path = require("path");
+const cors = require("cors");
+
 const connectDB = require("./config/db");
 const customerRoutes = require("./routes/customerRoutes");
 const accountRoutes = require("./routes/accountRoutes");
@@ -12,6 +14,13 @@ const kycRoutes = require("./routes/kycRoutes");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Enable CORS
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "*",
+  })
+);
+
 // Parse incoming JSON requests
 app.use(express.json());
 
@@ -21,7 +30,12 @@ app.use("/api/accounts", accountRoutes);
 app.use("/api/transfers", transferRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/kyc", kycRoutes);
-app.use("/app", express.static(path.join(__dirname, "public")));
+
+// Serve frontend static files
+app.use(
+  "/app",
+  express.static(path.join(__dirname, "../public"))
+);
 
 // Test endpoint
 app.get("/", (req, res) => {
@@ -32,11 +46,16 @@ app.get("/", (req, res) => {
 
 // Connect to MongoDB, then start the server
 const startServer = async () => {
-  await connectDB();
+  try {
+    await connectDB();
 
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error.message);
+    process.exit(1);
+  }
 };
 
 startServer();
