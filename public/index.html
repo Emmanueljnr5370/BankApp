@@ -19,12 +19,101 @@
     <script src="./app.js" defer></script>
   </head>
   <body>
-    <div class="auth-page" id="auth-page">
+    <div class="auth-page bvn-page" id="bvn-page">
       <main class="auth-card">
         <a class="brand" href="/app/" aria-label="Cedar Bank home">
           <span class="brand-mark" aria-hidden="true">C</span>
           <span>cedar<span class="brand-light">bank</span></span>
         </a>
+        <div class="auth-heading">
+          <p class="eyebrow">YOUR CEDAR JOURNEY STARTS HERE</p>
+          <h1>Create your BVN record</h1>
+          <p class="muted">
+            Create a BVN record first, then continue to your Cedar account.
+          </p>
+        </div>
+        <form id="bvn-form" class="form-stack">
+          <div class="field-row">
+            <label>
+              First name
+              <input name="firstName" autocomplete="given-name" required minlength="1" />
+            </label>
+            <label>
+              Last name
+              <input name="lastName" autocomplete="family-name" required minlength="1" />
+            </label>
+          </div>
+          <label>
+            BVN
+            <input
+              name="bvn"
+              inputmode="numeric"
+              pattern="[0-9]{11}"
+              maxlength="11"
+              autocomplete="off"
+              required
+              aria-describedby="bvn-note"
+            />
+          </label>
+          <div class="field-row">
+            <label>
+              Date of birth
+              <input name="dob" type="date" autocomplete="bday" required />
+            </label>
+            <label>
+              Phone number
+              <input
+                name="phone"
+                type="tel"
+                autocomplete="tel"
+                required
+                minlength="10"
+                maxlength="15"
+              />
+            </label>
+          </div>
+          <p class="form-note" id="bvn-note">
+            This creates a BVN record in the configured test environment. It does
+            not issue an official BVN.
+          </p>
+          <button class="button button-primary button-wide" type="submit">
+            Create BVN <span aria-hidden="true">→</span>
+          </button>
+        </form>
+        <p class="auth-footnote">
+          Already have an account?
+          <button class="text-link" id="bvn-signin" type="button">Sign in</button>
+        </p>
+      </main>
+      <aside class="auth-aside">
+        <div class="aside-orb orb-one"></div>
+        <div class="aside-orb orb-two"></div>
+        <div class="aside-content">
+          <span class="aside-kicker">Banking, with room to grow</span>
+          <h2>Your money.<br />Moving forward.</h2>
+          <p>
+            Start by creating your BVN record, then set up your Cedar account
+            with confidence.
+          </p>
+          <div class="aside-quote">
+            <span class="quote-mark">“</span>
+            <p>Clarity for every day. Confidence for what comes next.</p>
+            <span class="quote-author">CEDAR BANK</span>
+          </div>
+        </div>
+        <span class="aside-footer">A calmer kind of banking.</span>
+      </aside>
+    </div>
+
+    <div class="auth-page hidden" id="auth-page">
+      <main class="auth-card">
+        <a class="brand" href="/app/" aria-label="Cedar Bank home">
+          <span class="brand-mark" aria-hidden="true">C</span>
+          <span>cedar<span class="brand-light">bank</span></span>
+        </a>
+        <button class="text-link auth-back" id="auth-back" type="button">
+          ← Back to BVN creation
+        </button>
         <div class="auth-heading">
           <p class="eyebrow">A better way to bank</p>
           <h1 id="auth-title">Welcome back</h1>

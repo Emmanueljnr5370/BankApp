@@ -3,6 +3,8 @@ const API_BASE_URL = "https://banking-api-app.onrender.com/api";
 const TOKEN_KEY = "cedarBankToken";
 const CUSTOMER_KEY = "cedarBankCustomer";
 
+const bvnPage = document.querySelector("#bvn-page");
+const bvnForm = document.querySelector("#bvn-form");
 const authPage = document.querySelector("#auth-page");
 const appShell = document.querySelector("#app-shell");
 const loginForm = document.querySelector("#login-form");
@@ -227,6 +229,7 @@ async function loadAccount() {
 }
 
 function showDashboard() {
+  bvnPage.classList.add("hidden");
   authPage.classList.add("hidden");
   appShell.classList.remove("hidden");
   accountSetup.classList.add("hidden");
@@ -249,11 +252,19 @@ function signOut() {
 
   document.querySelector("#transaction-list").replaceChildren();
 
-  authPage.classList.remove("hidden");
+  bvnPage.classList.remove("hidden");
+  authPage.classList.add("hidden");
   appShell.classList.add("hidden");
 
   loginForm.reset();
   registerForm.reset();
+  bvnForm.reset();
+}
+
+function showAuth(mode) {
+  bvnPage.classList.add("hidden");
+  authPage.classList.remove("hidden");
+  setAuthMode(mode);
 }
 
 function addTextCell(row, text, className) {
@@ -448,6 +459,14 @@ document
   .querySelector("#register-tab")
   .addEventListener("click", () => setAuthMode("register"));
 
+document.querySelector("#bvn-signin").addEventListener("click", () => {
+  showAuth("login");
+});
+document.querySelector("#auth-back").addEventListener("click", () => {
+  authPage.classList.add("hidden");
+  bvnPage.classList.remove("hidden");
+});
+
 document.querySelector("#logout-button").addEventListener("click", signOut);
 document
   .querySelector("#open-transfer")
@@ -464,6 +483,36 @@ document
 document
   .querySelector("#reload-transactions")
   .addEventListener("click", loadTransactions);
+
+bvnForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  setBusy(bvnForm, true, "Creating BVN…");
+
+  const details = Object.fromEntries(new FormData(bvnForm).entries());
+
+  try {
+    await apiRequest("/kyc/generate-test-bvn", {
+      method: "POST",
+      body: JSON.stringify(details),
+    });
+
+    showAuth("register");
+
+    registerForm.elements.fullName.value =
+      `${details.firstName} ${details.lastName}`.trim();
+    registerForm.elements.phoneNumber.value = details.phone;
+    registerForm.elements.identityType.value = "BVN";
+    registerForm.elements.identityNumber.value = details.bvn;
+    registerForm.elements.dateOfBirth.value = details.dob;
+
+    showToast("BVN record created. Complete your account registration.");
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    setBusy(bvnForm, false);
+  }
+});
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -617,4 +666,6 @@ if (sessionStorage.getItem(TOKEN_KEY) && customer?.id) {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(CUSTOMER_KEY);
   customer = null;
+  bvnPage.classList.remove("hidden");
+  authPage.classList.add("hidden");
 }

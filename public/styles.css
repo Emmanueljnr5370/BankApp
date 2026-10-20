@@ -272,6 +272,38 @@ input[readonly] {
   text-align: center;
 }
 
+.auth-footnote .text-link {
+  margin-left: 3px;
+}
+
+.text-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--green);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.text-link:hover {
+  color: var(--green-dark);
+  text-decoration: underline;
+}
+
+.auth-back {
+  margin-top: 23px;
+  font-size: 12px;
+}
+
+.auth-back + .auth-heading {
+  margin-top: 28px;
+}
+
+.bvn-page .auth-heading {
+  margin-top: 43px;
+}
+
 .auth-aside {
   position: relative;
   display: flex;
