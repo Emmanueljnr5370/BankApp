@@ -2,6 +2,7 @@ const API_BASE_URL = "https://banking-api-app.onrender.com/api";
 
 const TOKEN_KEY = "cedarBankToken";
 const CUSTOMER_KEY = "cedarBankCustomer";
+const PENDING_IDENTITY_KEY = "cedarBankPendingIdentity";
 
 const bvnPage = document.querySelector("#bvn-page");
 const bvnForm = document.querySelector("#bvn-form");
@@ -9,6 +10,7 @@ const authPage = document.querySelector("#auth-page");
 const appShell = document.querySelector("#app-shell");
 const loginForm = document.querySelector("#login-form");
 const registerForm = document.querySelector("#register-form");
+const authTabs = document.querySelector(".auth-tabs");
 const accountForm = document.querySelector("#account-form");
 const accountSetup = document.querySelector("#account-setup");
 const accountContent = document.querySelector("#account-content");
@@ -20,6 +22,7 @@ let customer = readSession(CUSTOMER_KEY);
 let account = null;
 let toastTimeout;
 let nameEnquiryTimeout;
+let bvnCreated = false;
 
 class ApiError extends Error {
   constructor(message, status) {
@@ -130,6 +133,9 @@ function setBusy(form, busy, label) {
 function setAuthMode(mode) {
   const isRegister = mode === "register";
 
+  if (isRegister && !bvnCreated) return;
+
+  authTabs.classList.toggle("hidden", !bvnCreated);
   loginForm.classList.toggle("hidden", isRegister);
   registerForm.classList.toggle("hidden", !isRegister);
 
@@ -145,6 +151,42 @@ function setAuthMode(mode) {
   document.querySelector("#auth-description").textContent = isRegister
     ? "Create your account with a few details. Identity verification is required."
     : "Sign in to your account to pick up where you left off.";
+}
+
+function setAuthenticatedSession(data) {
+  if (!data.token || !data.customer?.id || !data.customer?.email) {
+    throw new ApiError("The server returned an incomplete login response.");
+  }
+
+  sessionStorage.setItem(TOKEN_KEY, data.token);
+
+  customer = data.customer;
+
+  sessionStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
+
+  const pendingIdentity = readSession(PENDING_IDENTITY_KEY);
+
+  if (
+    pendingIdentity?.email?.toLowerCase() === customer.email.toLowerCase()
+  ) {
+    accountForm.elements.identityType.value = pendingIdentity.identityType;
+    accountForm.elements.identityNumber.value =
+      pendingIdentity.identityNumber;
+    accountForm.elements.dateOfBirth.value = pendingIdentity.dateOfBirth;
+  } else {
+    sessionStorage.removeItem(PENDING_IDENTITY_KEY);
+  }
+
+  showDashboard();
+}
+
+async function loginCustomer(email, password) {
+  const data = await apiRequest("/customers/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+
+  setAuthenticatedSession(data);
 }
 
 function formatNaira(amount) {
@@ -243,9 +285,11 @@ function showDashboard() {
 function signOut() {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(CUSTOMER_KEY);
+  sessionStorage.removeItem(PENDING_IDENTITY_KEY);
 
   customer = null;
   account = null;
+  bvnCreated = false;
 
   accountSetup.classList.add("hidden");
   accountContent.classList.add("hidden");
@@ -460,6 +504,7 @@ document
   .addEventListener("click", () => setAuthMode("register"));
 
 document.querySelector("#bvn-signin").addEventListener("click", () => {
+  sessionStorage.removeItem(PENDING_IDENTITY_KEY);
   showAuth("login");
 });
 document.querySelector("#auth-back").addEventListener("click", () => {
@@ -497,6 +542,7 @@ bvnForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(details),
     });
 
+    bvnCreated = true;
     showAuth("register");
 
     registerForm.elements.fullName.value =
@@ -522,21 +568,10 @@ loginForm.addEventListener("submit", async (event) => {
   const formData = new FormData(loginForm);
 
   try {
-    const data = await apiRequest("/customers/login", {
-      method: "POST",
-      body: JSON.stringify({
-        email: formData.get("email"),
-        password: formData.get("password"),
-      }),
-    });
-
-    sessionStorage.setItem(TOKEN_KEY, data.token);
-
-    customer = data.customer;
-
-    sessionStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
-
-    showDashboard();
+    await loginCustomer(
+      formData.get("email"),
+      formData.get("password"),
+    );
   } catch (error) {
     showToast(error.message, "error");
   } finally {
@@ -558,13 +593,33 @@ registerForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(details),
     });
 
-    registerForm.reset();
+    sessionStorage.setItem(
+      PENDING_IDENTITY_KEY,
+      JSON.stringify({
+        email: String(details.email).trim().toLowerCase(),
+        identityType: details.identityType,
+        identityNumber: details.identityNumber,
+        dateOfBirth: details.dateOfBirth,
+      }),
+    );
 
-    setAuthMode("login");
+    registerForm.reset();
 
     loginForm.elements.email.value = details.email;
 
-    showToast("Identity verified and account created. Please sign in.");
+    try {
+      await loginCustomer(details.email, details.password);
+      showToast(
+        "Customer registered and signed in. Create your account to continue.",
+      );
+    } catch (error) {
+      showAuth("login");
+      loginForm.elements.email.value = details.email;
+      showToast(
+        `Customer registered, but sign-in failed: ${error.message} Please sign in to continue.`,
+        "error",
+      );
+    }
   } catch (error) {
     showToast(error.message, "error");
   } finally {
@@ -586,6 +641,7 @@ accountForm.addEventListener("submit", async (event) => {
     });
 
     accountForm.reset();
+    sessionStorage.removeItem(PENDING_IDENTITY_KEY);
 
     showToast("Your account is ready.");
 
@@ -668,4 +724,5 @@ if (sessionStorage.getItem(TOKEN_KEY) && customer?.id) {
   customer = null;
   bvnPage.classList.remove("hidden");
   authPage.classList.add("hidden");
+  setAuthMode("login");
 }
